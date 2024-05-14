@@ -1,0 +1,328 @@
+C51 COMPILER V9.59.0.0   JIFENQI                                                           10/07/2023 20:47:38 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE JIFENQI
+OBJECT MODULE PLACED IN jifenqi.OBJ
+COMPILER INVOKED BY: D:\keilC51\C51\BIN\C51.EXE jifenqi.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include<reg51.h>
+   2          
+   3          #define LEDData P0
+   4          
+   5          unsigned char code LEDCode[]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f};
+   6          
+   7          unsigned char minit,second,count,count1;          //分，秒，计数器
+   8          sbit add2=P1^0;           //在未开始比赛时为加时间分
+   9          sbit add3=P1^1;           //在未开始比赛时为减时间分
+  10          sbit secondpoint=P0^7;        //秒闪动点
+  11          //----依次点亮数码管的位------
+  12          sbit led1=P2^7;
+  13          sbit led2=P2^6;
+  14          sbit led3=P2^5;
+  15          sbit led4=P2^4;
+  16          sbit led5=P2^3;
+  17          sbit led6=P2^2;
+  18          sbit led7=P2^1;
+  19          sbit led8=P2^0;
+  20          sbit led9=P3^7;
+  21          sbit led10=P3^6;
+  22          sbit led11=P3^5;
+  23          
+  24          sbit alam=P1^7;           //报警
+  25          sbit onoff=P3^2;
+  26          bit  playon=0;            //比赛进行标志位，为1时表示比赛开始，计时开启
+  27          bit  timeover=0;          //比赛结束标志位，为1时表示时间已经完
+  28          bit  halfsecond=0;          //半秒标志位
+  29          
+  30          unsigned int scoreA,flat=1,pan=0;       //得分
+  31          
+  32              
+  33          
+  34          void Delay5ms(void)
+  35          {
+  36   1        unsigned int i;
+  37   1        for(i=100;i>0;i--);
+  38   1      }
+  39          void display(void)
+  40          {
+  41   1      //-----------显示时间分--------------
+  42   1        LEDData=LEDCode[minit/10];
+  43   1        led1=0;
+  44   1        Delay5ms();
+  45   1        led1=1;
+  46   1        LEDData=LEDCode[minit%10];
+  47   1        led2=0;
+  48   1        Delay5ms();
+  49   1        led2=1;
+  50   1      //-------------秒点闪动------------
+  51   1        if(halfsecond==1)
+  52   1          LEDData=0x80;
+  53   1        else
+  54   1          LEDData=0x00;
+  55   1        led2=0;
+C51 COMPILER V9.59.0.0   JIFENQI                                                           10/07/2023 20:47:38 PAGE 2   
+
+  56   1        Delay5ms();
+  57   1        led2=1;
+  58   1        secondpoint=0;
+  59   1      //-----------显示时间秒------------
+  60   1        LEDData=LEDCode[second/10];
+  61   1        led3=0;
+  62   1        Delay5ms();
+  63   1        led3=1;
+  64   1        LEDData=LEDCode[second%10];
+  65   1        led4=0;
+  66   1        Delay5ms();
+  67   1        led4=1;
+  68   1      //-----------显示1组的分数百位-------
+  69   1        LEDData=LEDCode[scoreA/100];
+  70   1        led5=0;
+  71   1        Delay5ms();
+  72   1        led5=1;
+  73   1      //---------------显示1组分数的十位-----------
+  74   1        LEDData=LEDCode[(scoreA%100)/10];
+  75   1        led6=0;
+  76   1        Delay5ms();
+  77   1        led6=1;
+  78   1      
+  79   1      //---------------显示1组分数的个位-----------
+  80   1        LEDData=LEDCode[scoreA%10];
+  81   1        led7=0;
+  82   1        Delay5ms();
+  83   1        led7=1;
+  84   1      }
+  85          
+  86          //=========================按键检测程序================================================
+  87          void keyscan(void)
+  88          {
+  89   1        if(onoff==0)
+  90   1        {
+  91   2          display();
+  92   2          if(onoff==0)
+  93   2          {
+  94   3            alam=0;
+  95   3            Delay5ms();Delay5ms();
+  96   3            alam=1;
+  97   3            TR1=0;
+  98   3            timeover=0;
+  99   3            playon=!playon;       //开始标志位
+ 100   3            TR0=playon;         //开启计时
+ 101   3            do
+ 102   3              display();
+ 103   3            while(onoff==0);
+ 104   3          }
+ 105   2        }
+ 106   1        if(playon==0)
+ 107   1        {
+ 108   2          if(add2==0)
+ 109   2          {
+ 110   3            display();
+ 111   3            if(add2==0);
+ 112   3            {
+ 113   4              alam=0;
+ 114   4              Delay5ms();Delay5ms();
+ 115   4              alam=1;
+ 116   4              if(minit<99)
+ 117   4                minit++;
+C51 COMPILER V9.59.0.0   JIFENQI                                                           10/07/2023 20:47:38 PAGE 3   
+
+ 118   4              else
+ 119   4                minit=99;
+ 120   4            }
+ 121   3            do
+ 122   3              display();
+ 123   3            while(add2==0);
+ 124   3          }
+ 125   2      
+ 126   2          if(add3==0)
+ 127   2          {
+ 128   3            display();
+ 129   3            if(add3==0);
+ 130   3            {
+ 131   4              alam=0;
+ 132   4              Delay5ms();Delay5ms();
+ 133   4              alam=1;
+ 134   4              if(minit>0)
+ 135   4                minit--;
+ 136   4              else
+ 137   4                minit=0;
+ 138   4            }
+ 139   3            do
+ 140   3              display();
+ 141   3            while(add3==0);
+ 142   3          }
+ 143   2        }
+ 144   1        else
+ 145   1        {
+ 146   2          if(playon==1&&add2==1&&add3==0){pan=1;}
+ 147   2          if(add2==0)
+ 148   2          {
+ 149   3            display();
+ 150   3            if(add2==0);
+ 151   3            {
+ 152   4              alam=0;
+ 153   4              Delay5ms();Delay5ms();
+ 154   4              alam=1;
+ 155   4              if(scoreA<999)
+ 156   4                  scoreA=scoreA+2;
+ 157   4                else
+ 158   4                  scoreA=999;
+ 159   4            }
+ 160   3            do
+ 161   3              display();
+ 162   3            while(add2==0);
+ 163   3          }
+ 164   2      
+ 165   2          if(add3==0)
+ 166   2          {
+ 167   3            display();
+ 168   3            if(add3==0);
+ 169   3            {
+ 170   4              alam=0;
+ 171   4              Delay5ms();Delay5ms();
+ 172   4              alam=1;
+ 173   4              if(scoreA<999)
+ 174   4                  scoreA=scoreA+3;
+ 175   4                else
+ 176   4                  scoreA=999;
+ 177   4            }
+ 178   3            do
+ 179   3              display();
+C51 COMPILER V9.59.0.0   JIFENQI                                                           10/07/2023 20:47:38 PAGE 4   
+
+ 180   3            while(add3==0);
+ 181   3          }
+ 182   2        }
+ 183   1      }
+ 184            
+ 185          
+ 186          
+ 187          //******************************主函数*************************************************
+ 188          void main(void)
+ 189          {
+ 190   1        TMOD=0x11;
+ 191   1        TL0=0xb0;
+ 192   1        TH0=0x3c;
+ 193   1        TL1=0xb0;
+ 194   1        TH1=0x3c;
+ 195   1        minit=1;        //初始值为1：00
+ 196   1        second=0;
+ 197   1        EA=1;
+ 198   1        ET0=1;
+ 199   1        ET1=1;
+ 200   1        TR0=0;
+ 201   1        TR1=0;
+ 202   1        P1=0xFF;
+ 203   1        P3=0xFF;
+ 204   1        
+ 205   1        while(1)
+ 206   1        {
+ 207   2          keyscan();
+ 208   2          display();
+ 209   2          if(pan==1){
+ 210   3          if(flat==1&&(scoreA==30||scoreA>30)){
+ 211   4          minit=0;
+ 212   4            second=40;
+ 213   4            scoreA=0;
+ 214   4            flat++;
+ 215   4          }
+ 216   3          if(flat==2&&(scoreA==30||scoreA>30)){
+ 217   4          minit=0;
+ 218   4            second=30;
+ 219   4            scoreA=0;
+ 220   4            flat++; 
+ 221   4          }
+ 222   3          if(flat==3&&(scoreA==20||scoreA>20)){
+ 223   4            minit=1;
+ 224   4            second=0;
+ 225   4            scoreA=0;
+ 226   4            flat=1;
+ 227   4            playon=0;
+ 228   4            keyscan();
+ 229   4            if(playon==0)
+ 230   4            {
+ 231   5                break;
+ 232   5            }
+ 233   4          }
+ 234   3          pan=0;
+ 235   3          }
+ 236   2        }
+ 237   1      }
+ 238          
+ 239          
+ 240          //*********************************中断服务函数**************************************
+ 241          void  time0_int(void) interrupt 1 
+C51 COMPILER V9.59.0.0   JIFENQI                                                           10/07/2023 20:47:38 PAGE 5   
+
+ 242          {
+ 243   1        TL0=0xb0;
+ 244   1        TH0=0x3c;
+ 245   1        TR0=1;
+ 246   1          count++;
+ 247   1        if(count==20)
+ 248   1        {
+ 249   2          halfsecond=0;
+ 250   2        }
+ 251   1      
+ 252   1          if(count==30)
+ 253   1          {
+ 254   2          count=0;
+ 255   2          halfsecond=1;
+ 256   2        
+ 257   2            if(second==0)
+ 258   2          {
+ 259   3            if(minit>0)
+ 260   3            {
+ 261   4              second=59;
+ 262   4              minit--;
+ 263   4            }
+ 264   3            else
+ 265   3            {
+ 266   4              timeover=1;
+ 267   4              playon=0;
+ 268   4              TR0=0;
+ 269   4              TR1=1;
+ 270   4            }
+ 271   3          }
+ 272   2          else
+ 273   2            second--;
+ 274   2          }
+ 275   1      }
+ 276          
+ 277          
+ 278          //*********************************中断服务函数**************************************
+ 279          void  time1_int(void) interrupt 3
+ 280          {
+ 281   1        TL1=0xb0;
+ 282   1        TH1=0x3c;
+ 283   1        TR1=1;
+ 284   1          count1++;
+ 285   1        if(count1==10)
+ 286   1        {
+ 287   2          alam=0;
+ 288   2        }
+ 289   1      
+ 290   1          if(count1==20)
+ 291   1          {
+ 292   2          count1=0;
+ 293   2          alam=1;
+ 294   2        }
+ 295   1      } 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    767    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10    ----
+C51 COMPILER V9.59.0.0   JIFENQI                                                           10/07/2023 20:47:38 PAGE 6   
+
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
